@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generátor Receptů</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .input-hint {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .no-results {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: #666;
+        }
+
+        .recipe-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .recipe-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        .recipe-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .match-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+
+        .match-100 {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .match-75 {
+            background: #FFC107;
+            color: white;
+        }
+
+        .match-50 {
+            background: #FF9800;
+            color: white;
+        }
+
+        .recipe-info {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .missing {
+            color: #f44336;
+            font-weight: 500;
+        }
+
+        .show-details-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            margin-top: 10px;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .show-details-btn:active {
+            background: #5568d3;
+        }
+
+        .recipe-details {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .recipe-details.show {
+            display: block;
+        }
+
+        .detail-section {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .detail-section h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .ingredient-item {
+            margin-bottom: 8px;
+            color: #333;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .ingredient-item:before {
+            content: "•";
+            position: absolute;
+            left: 5px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .instruction-step {
+            margin-bottom: 15px;
+            color: #333;
+            line-height: 1.6;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .step-number {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .your-ingredients {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .your-ingredients strong {
+            color: #667eea;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            .subtitle {
+                font-size: 0.9em;
+            }
+            
+            .recipe-name {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍳 Generátor Receptů</h1>
+            <p class="subtitle">Zadej suroviny, které máš doma, a najdeme ti perfektní recept!</p>
+        </div>
+
+        <div class="input-section">
+            <label for="ingredients">Jaké suroviny máš k dispozici?</label>
+            <p class="input-hint">Zadej suroviny oddělené čárkou, například: vejce, sýr, chleb, rajče</p>
+            <input type="text" id="ingredients" placeholder="vejce, sýr, máslo, chleb...">
+            <button class="btn" onclick="findRecipes()">Najít recepty</button>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        const recipes = [
+            {
+                name: "Klasická omeleta",
+                ingredients: [
+                    { item: "vejce", amount: "3 ks" },
+                    { item: "sýr", amount: "50 g nastrouhaného" },
+                    { item: "máslo", amount: "1 lžíce" },
+                    { item: "mléko", amount: "2 lžíce (volitelné)" }
+                ],
+                steps: [
+                    "Rozšlehej vejce s mlékem vidličkou do pěny",
+                    "Rozpusť máslo na pánvi na středním ohni",
+                    "Vlej rozšlehaná vejce a nech 2-3 minuty ztuhnout",
+                    "Posyp nastrouhaným sýrem",
+                    "Přehni omeletu na polovinu a podávej teplou"
+                ],
+                prepTime: "10 minut",
+                cookingTemp: "střední oheň"
+            },
+            {
+                name: "Grilovaný sýrový sendvič",
+                ingredients: [
+                    { item: "chleb", amount: "2 plátky" },
+                    { item: "sýr", amount: "2 plátky nebo 50 g nastrouhaného" },
+                    { item: "máslo", amount: "1 lžíce" }
+                ],
+                steps: [
+                    "Namaž oba plátky chleba máslem z vnější strany",
+                    "Vlož sýr mezi plátky",
+                    "Rozehřej pánev na středním ohni",
+                    "Griluj sendvič 2-3 minuty z každé strany dozlatova",
+                    "Sýr by měl být roztavený a chleba křupavý"
+                ],
+                prepTime: "8 minut",
+                cookingTemp: "střední oheň"
+            },
+            {
+                name: "Těstoviny s rajčatovou omáčkou",
+                ingredients: [
+                    { item: "těstoviny", amount: "250 g (cca 2 porce)" },
+                    { item: "rajče", amount: "4-5 ks nebo 400 g konzervovaných" },
+                    { item: "česnek", amount: "2 stroužky" },
+                    { item: "olej", amount: "3 lžíce olivového" },
+                    { item: "sůl", amount: "podle chuti" }
+                ],
+                steps: [
+                    "Uvař těstoviny ve vroucí osolené vodě podle návodu (obvykle 10-12 minut)",
+                    "Nakrájej česnek na plátky",
+                    "Na pánvi rozpal olej na středním ohni",
+                    "Osmahni česnek 1 minutu dozlatova",
+                    "Přidej nakrájená nebo rozmačkaná rajčata",
+                    "Vař omáčku 10-15 minut na mírném ohni, občas zamíchej",
+                    "Smíchej omáčku s těstovinami a podávej"
+                ],
+                prepTime: "25 minut",
+                cookingTemp: "střední až mírný oheň"
+            },
+            {
+                name: "Kuřecí stir-fry",
+                ingredients: [
+                    { item: "kuře", amount: "300 g prsou nakrájených na kousky" },
+                    { item: "zelenina", amount: "2 hrnky (paprika, brokolice, mrkev)" },
+                    { item: "sójová omáčka", amount: "3 lžíce" },
+                    { item: "olej", amount: "2 lžíce" }
+                ],
+                steps: [
+                    "Nakrájej kuře a zeleninu na stejně velké kousky",
+                    "Rozpal wok nebo velkou pánev na vysokém ohni",
+                    "Přidej olej a rozehřej",
+                    "Osmahni kuře 5-6 minut, aby bylo propečené",
+                    "Přidej zeleninu a smaž další 3-4 minuty za stálého míchání",
+                    "Přilej sójovou omáčku, zamíchej a smaž ještě 1 minutu"
+                ],
+                prepTime: "18 minut",
+                cookingTemp: "vysoký oheň"
+            },
+            {
+                name: "Míchaná vejce",
+                ingredients: [
+                    { item: "vejce", amount: "3 ks" },
+                    { item: "máslo", amount: "1 lžíce" },
+                    { item: "mléko", amount: "2 lžíce" },
+                    { item: "sůl", amount: "podle chuti" }
+                ],
+                steps: [
+                    "Rozšlehej vejce s mlékem a špetkou soli",
+                    "Rozpusť máslo na pánvi na mírném ohni",
+                    "Vlej vejce a nech 30 sekund",
+                    "Pomalu míchej stěrkou 3-4 minuty, aby vznikly krémové vločky",
+                    "Sejmi z ohně těsně předtím, než jsou úplně hotová (dovaří se sama)"
+                ],
+                prepTime: "8 minut",
+                cookingTemp: "mírný oheň"
+            },
+            {
+                name: "Rajčatová polévka",
+                ingredients: [
+                    { item: "rajče", amount: "6 ks větších nebo 500 g" },
+                    { item: "cibule", amount: "1 ks" },
+                    { item: "česnek", amount: "2 stroužky" },
+                    { item: "smetana", amount: "100 ml" },
+                    { item: "olej", amount: "2 lžíce" }
+                ],
+                steps: [
+                    "Nakrájej cibuli a česnek nadrobno",
+                    "Osmahni na oleji 3-4 minuty na středním ohni",
+                    "Přidej nakrájená rajčata a vař 15 minut",
+                    "Rozmixuj ponorným mixérem do hladka",
+                    "Přidej smetanu, zamíchej a prohřej 2 minuty",
+                    "Dochut solí a pepřem"
+                ],
+                prepTime: "30 minut",
+                cookingTemp: "střední oheň"
+            },
+            {
+                name: "Smažená vejce",
+                ingredients: [
+                    { item: "vejce", amount: "2 ks" },
+                    { item: "olej", amount: "2 lžíce nebo máslo 1 lžíce" },
+                    { item: "sůl", amount: "podle chuti" }
+                ],
+                steps: [
+                    "Rozpal pánev s olejem na středním ohni",
+                    "Opatrně rozbij vejce na pánev",
+                    "Smaž 3-4 minuty, dokud bílek neztvrdne",
+                    "Pro vejce na tvrdo otočíš a smaž ještě 1-2 minuty",
+                    "Osolíš a podáváš ihned"
+                ],
+                prepTime: "5 minut",
+                cookingTemp: "střední oheň"
+            },
+            {
+                name: "Hovězí guláš",
+                ingredients: [
+                    { item: "hovězí maso", amount: "500 g na kostky" },
+                    { item: "cibule", amount: "2 ks velké" },
+                    { item: "rajčatový protlak", amount: "2 lžíce" },
+                    { item: "paprika", amount: "2 lžíce sladké mleté" },
+                    { item: "olej", amount: "3 lžíce" },
+                    { item: "česnek", amount: "3 stroužky" }
+                ],
+                steps: [
+                    "Nakrájej cibuli na kostičky a osmahni na oleji 5 minut dozlatova",
+                    "Přidej paprika, zamíchej a hned zalij trochou vody",
+                    "Přidej maso a osmahni 10 minut na vysokém ohni",
+                    "Přidej protlak, česnek, osolíš a zalijš vodou (maso musí být ponořené)",
+                    "Vař pod pokličkou 90-120 minut na mírném ohni, občas zamíchej",
+                    "Guláš je hotový, když je maso měkké a omáčka hustá"
+                ],
+                prepTime: "2-2,5 hodiny",
+                cookingTemp: "mírný oheň"
+            },
+            {
+                name: "Vepřové na paprice",
+                ingredients: [
+                    { item: "vepřové maso", amount: "500 g (krkovice na kostky)" },
+                    { item: "cibule", amount: "2 ks" },
+                    { item: "paprika", amount: "1 lžíce sladké mleté" },
+                    { item: "smetana na vaření", amount: "200 ml" },
+                    { item: "olej", amount: "2 lžíce" },
+                    { item: "mouka", amount: "1 lžíce" }
+                ],
+                steps: [
+                    "Osmahni nakrájenou cibuli na oleji 5 minut",
+                    "Přidej maso a smaž 10 minut dozlatova",
+                    "Zasypej paprikou a moukou, promíchej",
+                    "Zalij vodou (cca 300 ml) a vař pod pokličkou 40-50 minut na mírném ohni",
+                    "Přidej smetanu, zamíchej a prohřej 5 minut",
+                    "Podávej s knedlíky nebo rýží"
+                ],
+                prepTime: "70 minut",
+                cookingTemp: "mírný oheň"
+            },
+            {
+                name: "Kuřecí na paprice",
+                ingredients: [
+                    { item: "kuře", amount: "500 g prsou nebo stehen" },
+                    { item: "cibule", amount: "1 ks" },
+                    { item: "paprika", amount: "1 lžíce sladké mleté" },
+                    { item: "smetana na vaření", amount: "150 ml" },
+                    { item: "olej", amount: "2 lžíce" }
+                ],
+                steps: [
+                    "Nakrájej kuře na kousky a cibuli na kostičky",
+                    "Osmahni cibuli na oleji 3 minuty",
+                    "Přidej kuře a smaž 8-10 minut dozlatova",
+                    "Zasypej paprikou, zamíchej a zalij 200 ml vody",
+                    "Vař 20 minut na středním ohni",
+                    "Přidej smetanu, zamíchej a prohřej 3 minuty"
+                ],
+                prepTime: "40 minut",
+                cookingTemp: "střední oheň"
+            },
+            {
+                name: "Zeleninové kari",
+                ingredients: [
+                    { item: "zelenina", amount: "500 g mix (brokolice, mrkev, paprika, cuketa)" },
+                    { item: "cibule", amount: "1 ks" },
+                    { item: "kokosové mléko", amount: "400 ml (nebo smetana na vaření 200 ml)" },
+                    { item: "kari koření", amount: "2 lžíce" },
+                    { item: "olej", amount: "2 lžíce" }
+                ],
+                steps: [
+                    "Nakrájej veškerou zeleninu na kousky",
+                    "Osmahni cibuli na oleji 3 minuty",
+                    "Přidej tvrdší zeleninu (mrkev, brokolice) a smaž 5 minut",
+                    "Přidej kari koření a promíchej",
+                    "Zalij kokosovým mlékem a vař 15 minut na mírném ohni",
+                    "Přidej měkčí zeleninu (papriku, cuketu) a vař ještě 5 minut"
+                ],
+                prepTime: "35 minut",
+                cookingTemp: "mírný oheň"
+            },
+            {
+                name: "Boloňská omáčka",
+                ingredients: [
+                    { item: "mleté maso", amount: "400 g (hovězí nebo vepřové)" },
+                    { item: "rajčatový protlak", amount: "400 g" },
+                    { item: "cibule", amount: "1 ks" },
+                    { item: "mrkev", amount: "1 ks" },
+                    { item: "česnek", amount: "2 stroužky" },
+                    { item: "olej", amount: "2 lžíce" }
+                ],
+                steps: [
+                    "Nakrájej cibuli, mrkev a česnek najemno",
+                    "Osmahni zeleninu na oleji 5 minut",
+                    "Přidej mleté maso a smaž 10 minut, až je propečené",
+                    "Přidej rajčatový protlak, osolíš a přidáš oregano",
+                    "Vař 30-40 minut na mírném ohni, občas zamíchej",
+                    "Podávej se špagetami nebo těstovinami"
+                ],
+                prepTime: "60 minut",
+                cookingTemp: "mírný oheň"
+            },
+            {
+                name: "Vepřový řízek",
+                ingredients: [
+                    { item: "vepřové maso", amount: "4 plátky (krkovice, cca 150 g každý)" },
+                    { item: "mouka", amount: "3 lžíce" },
+                    { item: "vejce", amount: "2 ks" },
+                    { item: "strouhanka", amount: "1 hrnek" },
+                    { item: "olej", amount: "na smažení (cca 200 ml)" }
+                ],
+                steps: [
+                    "Naklepej plátky masa kuchyňským kladívkem na 1 cm",
+                    "Osolíš a opepříš",
+                    "Obalíš v mouce, rozšlehaném vejci a strouhance",
+                    "Rozpal hodně oleje na pánvi (oheň střední až vysoký)",
+                    "Smaž řízky 3-4 minuty z každé strany dozlatova",
+                    "Nech okapat na papírové utěrce"
+                ],
+                prepTime: "25 minut",
+                cookingTemp: "střední až vysoký oheň"
+            },
+            {
+                name: "Hovězí stroganoff",
+                ingredients: [
+                    { item: "hovězí maso", amount: "500 g (svíčková, nakrájená na proužky)" },
+                    { item: "cibule", amount: "1 ks" },
+                    { item: "žampiony", amount: "200 g nakrájené" },
+                    { item: "smetana na vaření", amount: "200 ml" },
+                    { item: "hořčice", amount: "1 lžíce" },
+                    { item: "olej", amount: "3 lžíce" }
+                ],
+                steps: [
+                    "Osmahni nakrájenou cibuli na oleji 3 minuty",
+                    "Přidej žampiony a smaž 5 minut",
+                    "Na jiné pánvi rychle osmahni maso na vysokém ohni 2-3 minuty",
+                    "Přidej maso k cibuli a houbám",
+                    "Vmíchej smetanu a hořčici, osolíš",
+                    "Prohřej 3-4 minuty na mírném ohni a podávej s rýží"
+                ],
+                prepTime: "25 minut",
+                cookingTemp: "vysoký oheň na maso, střední na omáčku"
+            },
+            {
+                name: "Zapečená zelenina se sýrem",
+                ingredients: [
+                    { item: "zelenina", amount: "600 g (brokolice, květák, mrkev)" },
+                    { item: "sýr", amount: "150 g nastrouhaného" },
+                    { item: "smetana na vaření", amount: "200 ml" },
+                    { item: "česnek", amount: "2 stroužky" },
+                    { item: "máslo", amount: "na vymazání formy" }
+                ],
+                steps: [
+                    "Rozehřej troubu na 180°C",
+                    "Nakrájej zeleninu a povař ve vodě 5 minut",
+                    "Slij vodu a dej zeleninu do vymazané formy",
+                    "Smíchej smetanu s prolisovaným česnekem a polovinou sýra",
+                    "Zalij zeleninu, posyp zbylým sýrem",
+                    "Zapékej 25-30 minut dozlatova"
+                ],
+                prepTime: "45 minut",
+                cookingTemp: "trouba 180°C"
+            },
+            {
+                name: "Vepřová pečeně na česneku",
+                ingredients: [
+                    { item: "vepřové maso", amount: "600 g (krkovice celá)" },
+                    { item: "česnek", amount: "1 celá hlavička" },
+                    { item: "olej", amount: "3 lžíce" },
+                    { item: "sůl", amount: "1 lžíce" },
+                    { item: "kmín", amount: "1 lžička" }
+                ],
+                steps: [
+                    "Rozehřej troubu na 180°C",
+                    "Prolisuj česnek a smíchej s olejem, solí a kmínem",
+                    "Potři maso směsí ze všech stran",
+                    "Vlož do pekáče, přilij 100 ml vody",
+                    "Peč 90 minut, každých 20 minut pokapej výpekem",
+                    "Nech 10 minut odpočinout před krájením"
+                ],
+                prepTime: "110 minut",
+                cookingTemp: "trouba 180°C"
+            },
+            {
+                name: "Čočka na kyselo",
+                ingredients: [
+                    { item: "čočka", amount: "300 g červené nebo zelené" },
+                    { item: "cibule", amount: "1 ks" },
+                    { item: "ocet", amount: "2 lžíce" },
+                    { item: "olej", amount: "2 lžíce" },
+                    { item: "mouka", amount: "1 lžíce" },
+                    { item: "česnek", amount: "2 stroužky" }
+                ],
+                steps: [
+                    "Čočku propláchnout a vařit ve vodě 20-30 minut do měkka",
+                    "Osmahni cibuli na oleji 5 minut",
+                    "Přidej mouku, promíchej a přilij trošku vody z čočky",
+                    "Přidej uvařenou čočku, česnek, ocet a osolíš",
+                    "Vař ještě 5 minut a dochutíš",
+                    "Podávej s chlebem nebo párkem"
+                ],
+                prepTime: "45 minut",
+                cookingTemp: "střední oheň"
+            },
+            {
+                name: "Grilované zeleniny",
+                ingredients: [
+                    { item: "zelenina", amount: "500 g (cuketa, paprika, lilek, rajče)" },
+                    { item: "olej", amount: "3 lžíce olivového" },
+                    { item: "česnek", amount: "2 stroužky" },
+                    { item: "bazalka", amount: "hrst čerstvé (volitelné)" }
+                ],
+                steps: [
+                    "Nakrájej zeleninu na plátky cca 1 cm",
+                    "Smíchej olej s prolisovaným česnekem",
+                    "Potři zeleninu olejem a osolíš",
+                    "Griluj na grilu nebo grilovací pánvi 3-4 minuty z každé strany",
+                    "Zelenina má být měkká a mít grilované proužky",
+                    "Posyp bazalkou před podáváním"
+                ],
+                prepTime: "20 minut",
+                cookingTemp: "vysoký oheň na grilu"
+            }
+        ];
+
+        function normalizeText(text) {
+            const map = {
+                'á': 'a', 'č': 'c', 'ď': 'd', 'é': 'e', 'ě': 'e',
+                'í': 'i', 'ň': 'n', 'ó': 'o', 'ř': 'r', 'š': 's',
+                'ť': 't', 'ú': 'u', 'ů': 'u', 'ý': 'y', 'ž': 'z'
+            };
+            return text.toLowerCase().trim().split('').map(char => map[char] || char).join('');
+        }
+
+        function findRecipes() {
+            const input = document.getElementById('ingredients').value;
+            if (!input.trim()) {
+                alert('Prosím zadej nějaké suroviny!');
+                return;
+            }
+
+            const userIngredients = input.split(',').map(i => i.trim().toLowerCase());
+            const matches = [];
+
+            recipes.forEach(recipe => {
+                let matchCount = 0;
+                let missing = [];
+
+                recipe.ingredients.forEach(ing => {
+                    const reqIng = ing.item;
+                    const found = userIngredients.some(userIng => {
+                        const normReq = normalizeText(reqIng);
+                        const normUser = normalizeText(userIng);
+                        return normUser.includes(normReq) || normReq.includes(normUser);
+                    });
+
+                    if (found) {
+                        matchCount++;
+                    } else {
+                        missing.push(ing.item);
+                    }
+                });
+
+                const matchPercent = Math.round((matchCount / recipe.ingredients.length) * 100);
+
+                if (matchCount > 0) {
+                    matches.push({
+                        recipe: recipe,
+                        matchPercent: matchPercent,
+                        missing: missing
+                    });
+                }
+            });
+
+            matches.sort((a, b) => {
+                if (b.matchPercent !== a.matchPercent) {
+                    return b.matchPercent - a.matchPercent;
+                }
+                return a.missing.length - b.missing.length;
+            });
+
+            displayResults(matches, userIngredients);
+        }
+
+        function displayResults(matches, userIngredients) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            resultsDiv.classList.add('show');
+
+            if (matches.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results"><h2>😕 Bohužel jsme nenašli žádný recept</h2><p style="margin-top: 15px;">Zkus přidat běžnější suroviny jako: vejce, chleb, sýr, rajče nebo těstoviny.</p></div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="your-ingredients"><strong>Tvoje suroviny:</strong> ' + userIngredients.join(', ') + '</div>';
+
+            matches.forEach((match, index) => {
+                const recipe = match.recipe;
+                const matchClass = match.matchPercent === 100 ? 'match-100' : 
+                                 match.matchPercent >= 75 ? 'match-75' : 'match-50';
+
+                let cardHtml = '<div class="recipe-card"><div class="recipe-header"><div class="recipe-name">' + recipe.name + '</div><div class="match-badge ' + matchClass + '">' + match.matchPercent + '% shoda</div></div>';
+                
+                cardHtml += '<div class="recipe-info">⏱️ Čas: ' + recipe.prepTime + ' | 🔥 ' + recipe.cookingTemp + '</div>';
+                
+                if (match.missing.length > 0) {
+                    cardHtml += '<div class="recipe-info missing">❌ Chybí: ' + match.missing.join(', ') + '</div>';
+                } else {
+                    cardHtml += '<div class="recipe-info" style="color: #4CAF50;">✅ Máš všechny suroviny!</div>';
+                }
+
+                cardHtml += '<button class="show-details-btn" onclick="toggleDetails(' + index + ')">Zobrazit recept</button>';
+                
+                cardHtml += '<div class="recipe-details" id="details-' + index + '">';
+                cardHtml += '<div class="detail-section"><h3>📝 Potřebné suroviny:</h3>';
+                recipe.ingredients.forEach(ing => {
+                    cardHtml += '<div class="ingredient-item">' + ing.item + ' - ' + ing.amount + '</div>';
+                });
+                cardHtml += '</div>';
+                
+                cardHtml += '<div class="detail-section"><h3>👨‍🍳 Postup přípravy:</h3>';
+                recipe.steps.forEach((step, i) => {
+                    cardHtml += '<div class="instruction-step"><span class="step-number">' + (i + 1) + '</span>' + step + '</div>';
+                });
+                cardHtml += '</div></div></div>';
+
+                resultsDiv.innerHTML += cardHtml;
+            });
+        }
+
+        function toggleDetails(index) {
+            const details = document.getElementById('details-' + index);
+            details.classList.toggle('show');
+        }
+
+        document.getElementById('ingredients').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                findRecipes();
+            }
+        });
+    </script>
+</body>
+</html>
